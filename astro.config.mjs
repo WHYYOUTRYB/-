@@ -25,7 +25,7 @@ const wikiLinkPlugin = [
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://personal-blog.vercel.app",
+  site: "https://nine-blue-45.vercel.app",
   integrations: [sitemap()],
   vite: {
     plugins: [tailwindcss()],
