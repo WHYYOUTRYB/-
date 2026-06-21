@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>行波演示 · 三重视角</title>
+<style>
+  body { font-family: sans-serif; text-align: center; margin: 20px; background: #fafafa; }
+  canvas { border: 1px solid #ddd; border-radius: 6px; background: #fff; }
+  .label { color: #555; font-size: 13px; margin-top: 6px; }
+  .controls { margin-top: 12px; }
+  button { margin: 0 6px; padding: 6px 16px; font-size: 14px; cursor: pointer; border-radius: 4px; border: 1px solid #bbb; background: #fff; }
+  button.active { background: #3498db; color: #fff; border-color: #2980b9; }
+  button:hover { opacity: 0.85; }
+  hr { margin: 18px 0; border: none; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+<h2>🌊 行波 · 三重视角</h2>
+<canvas id="main" width="880" height="520"></canvas>
+<div class="label">● 蓝 = 波 | ● 红 = 你现在关注的"看点"</div>
+
+<div class="controls">
+  <span style="color:#666; font-size:14px;">切换视角：</span>
+  <button id="btnA" onclick="setMode('a')">(a) 固定 z — 盯住一点</button>
+  <button id="btnB" onclick="setMode('b')">(b) 固定 t — 拍快照</button>
+  <button id="btnC" onclick="setMode('c')">(c) 追波 — 行波</button>
+  <span style="margin-left:20px; color:#666; font-size:14px;">
+    <input type="range" id="speed" min="0.2" max="3" value="1" step="0.1" style="vertical-align:middle; width:90px;">
+    速度
+  </span>
+</div>
+
+<script>
+const canvas = document.getElementById('main');
+const ctx = canvas.getContext('2d');
+
+// 参数
+const amp = 70;           // 振幅（像素）
+const period = 400;       // 时间周期 T（time单位）
+const lambda = 120;       // 空间周期 λ（像素）
+const waveH = 420;        // 波形区域在 canvas 的 y
+const topH = 180;         // 上部固定点展示区 y
+
+let frame = 0;            // 全局时间
+let mode = 'c';           // a / b / c
+let speed = 1;
+
+document.getElementById('speed').addEventListener('input', function() {
+  speed = parseFloat(this.value);
+});
+document.getElementById('btnC').classList.add('active');
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn' + m.toUpperCase()).classList.add('active');
+}
+
+// === 视角 (a)：固定 z，看该点随时间振动 ===
+function drawModeA() {
+  const zFix = lambda * 0.3;  // 盯住 z = 0.3λ
+
+  // --- 上部：展示选定点的振动随时间 ---
+  const mx = 120, my = topH, r = 40;
+  // 画参考虚线
+  ctx.beginPath();
+  ctx.moveTo(mx, my - r - 15); ctx.lineTo(mx, my + r + 15);
+  ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1; ctx.stroke();
+
+  // 当前振动位置
+  const uVal = Math.cos(2 * Math.PI * (frame / period - zFix / lambda));
+  const dy = uVal * r;
+  ctx.beginPath();
+  ctx.arc(mx, my - dy, 8, 0, 2 * Math.PI);
+  ctx.fillStyle = '#e74c3c';
+  ctx.fill();
+
+  // 余弦曲线（局部时间轴）
+  ctx.strokeStyle = '#e74c3c';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let tx = 50; tx <= 190; tx++) {
+    const tNorm = frame / period + (tx - 120) / 200;
+    const y = my - r * Math.cos(2 * Math.PI * (tNorm - zFix / lambda));
+    if (tx === 50) ctx.moveTo(tx, y);
+    else ctx.lineTo(tx, y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`盯住 z = ${(zFix/lambda).toFixed(1)}λ`, mx - 50, my - r - 25);
+  ctx.fillText(`U(z₀,t) = U₀cos(ωt − 常数)`, mx - 70, my + r + 50);
+
+  // --- 下部：在完整波上标出这个点 ---
+  drawWaveBackground(zFix);
+}
+
+// === 视角 (b)：固定 t，看空间分布 ===
+function drawModeB() {
+  const tFix = frame % period;
+
+  // --- 上部：展示某一瞬间的空间分布 ---
+  ctx.strokeStyle = '#3498db';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 40; px <= 840; px++) {
+    const z = (px - 440) / lambda; // 归一化到波长单位
+    const y = waveH - amp * Math.cos(2 * Math.PI * (tFix / period - z));
+    if (px === 40) ctx.moveTo(px, y);
+    else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+
+  // 标记 λ
+  ctx.beginPath();
+  ctx.moveTo(440, waveH);
+  ctx.lineTo(440 + lambda, waveH);
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#888';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('λ', 440 + lambda/2 - 8, waveH + 18);
+
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('固定 t = t₀ — 拍一张快照', 350, 30);
+  ctx.fillText('U(z,t₀) = U₀cos(常数 − 2πz/λ)', 320, 52);
+}
+
+// === 视角 (c)：行波 ===
+function drawModeC() {
+  // 波形线
+  ctx.strokeStyle = '#3498db';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 40; px <= 840; px++) {
+    const z = (px - 440) / lambda;
+    const y = waveH - amp * Math.cos(2 * Math.PI * (frame / period - z));
+    if (px === 40) ctx.moveTo(px, y);
+    else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+
+  // 标记波峰位置
+  const peakZ = (frame / period) % 1;
+  const peakX = 440 + peakZ * lambda;
+  ctx.beginPath();
+  ctx.arc(peakX, waveH - amp, 6, 0, 2 * Math.PI);
+  ctx.fillStyle = '#e74c3c';
+  ctx.fill();
+
+  // 标速度 c
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('追波峰 — 波形以速度 c 向前平移', 310, 30);
+  ctx.fillText('波峰条件: ω(t−z/c)=0 → z=ct', 350, 52);
+
+  // 速度箭头
+  ctx.beginPath();
+  ctx.moveTo(peakX, waveH - amp);
+  const nextX = peakX + 30;
+  ctx.lineTo(nextX, waveH - amp);
+  ctx.strokeStyle = '#e74c3c';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // 箭头三角
+  ctx.beginPath();
+  ctx.moveTo(nextX, waveH - amp);
+  ctx.lineTo(nextX - 8, waveH - amp - 6);
+  ctx.lineTo(nextX - 8, waveH - amp + 6);
+  ctx.fillStyle = '#e74c3c';
+  ctx.fill();
+  ctx.fillText('c', nextX - 15, waveH - amp - 12);
+}
+
+// === 在完整波上画背景，标记被盯住的 z 点 ===
+function drawWaveBackground(highlightZ) {
+  // 完整波形
+  ctx.strokeStyle = '#3498db';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 40; px <= 840; px++) {
+    const z = (px - 440) / lambda;
+    const y = waveH - amp * Math.cos(2 * Math.PI * (frame / period - z));
+    if (px === 40) ctx.moveTo(px, y);
+    else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+
+  // 高亮 z₀ 位置
+  const zx = 440 + highlightZ / lambda * lambda;
+  ctx.beginPath();
+  ctx.moveTo(zx, waveH - amp - 20);
+  ctx.lineTo(zx, waveH + amp + 20);
+  ctx.strokeStyle = '#e74c3c';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 在该点的振动指示点
+  const uVal = Math.cos(2 * Math.PI * (frame / period - highlightZ / lambda));
+  ctx.beginPath();
+  ctx.arc(zx, waveH - uVal * amp, 7, 0, 2 * Math.PI);
+  ctx.fillStyle = '#e74c3c';
+  ctx.fill();
+
+  ctx.fillStyle = '#e74c3c';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`z = ${(highlightZ/lambda).toFixed(1)}λ`, zx + 10, waveH - uVal * amp);
+}
+
+// === 主循环 ===
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (mode === 'a') drawModeA();
+  else if (mode === 'b') drawModeB();
+  else drawModeC();
+
+  // 底部说明
+  ctx.fillStyle = '#aaa';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`t = ${(frame/period % 1).toFixed(2)}T  |  传播方向 →   |  z/c = ${(frame/period % 1).toFixed(2)}T`, 240, canvas.height - 8);
+
+  frame += speed;
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

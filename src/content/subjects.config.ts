@@ -41,6 +41,13 @@ export const subjects: Subject[] = [
     icon: "❖",
     order: 3,
   },
+  {
+    slug: "laser-physics",
+    name: "激光原理",
+    description: "辐射理论、谱线增宽、谐振腔与激光形成条件",
+    icon: "⚛",
+    order: 4,
+  },
 ];
 
 /** slug -> Subject 的快速查找表 */
