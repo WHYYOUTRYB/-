@@ -1,0 +1,116 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAllNotes, getSubjectName } from "../../lib/notes";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const allNotes = await getCollection("notes", ({ data }) => !data.draft);
+  const allEssays = await getCollection("essays", ({ data }) => !data.draft);
+
+  const tagSet = new Set<string>();
+  for (const note of allNotes) {
+    for (const tag of note.data.tags) tagSet.add(tag);
+  }
+  for (const essay of allEssays) {
+    for (const tag of essay.data.tags) tagSet.add(tag);
+  }
+
+  return [...tagSet].map((tag) => ({ params: { tag } }));
+}
+
+const { tag } = Astro.params;
+
+const allNotes = await getAllNotes();
+const allEssays = await getCollection("essays", ({ data }) => !data.draft);
+
+const matchedNotes = allNotes.filter((n) => n.data.tags.includes(tag!));
+const matchedEssays = allEssays.filter((e) => e.data.tags.includes(tag!));
+---
+
+<BaseLayout title={`标签：${tag}`} description={`标签"${tag}"下的所有内容`}>
+  <div class="page">
+    <header class="page-header">
+      <h1>标签：{tag}</h1>
+      <p class="page-desc">{matchedNotes.length + matchedEssays.length} 篇内容</p>
+    </header>
+
+    {matchedNotes.length > 0 && (
+      <section class="tag-section">
+        <h2 class="section-title">笔记</h2>
+        <ul class="item-list">
+          {matchedNotes.map((note) => (
+            <li>
+              <a href={`/notes/${note.data.subject}/${note.id}`}>{note.data.title}</a>
+              <span class="item-meta">{getSubjectName(note.data.subject)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {matchedEssays.length > 0 && (
+      <section class="tag-section">
+        <h2 class="section-title">随笔</h2>
+        <ul class="item-list">
+          {matchedEssays.map((essay) => (
+            <li>
+              <a href={`/essays/${essay.id}`}>{essay.data.title}</a>
+              <span class="item-meta">{essay.data.pubDate.toLocaleDateString("zh-CN")}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+  }
+  .page-desc {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .tag-section {
+    margin-bottom: 2rem;
+  }
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .item-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed var(--color-border);
+  }
+  .item-list li:last-child {
+    border-bottom: none;
+  }
+  .item-list a {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+  .item-meta {
+    font-size: 0.8rem;
+    color: var(--color-text-faint);
+  }
+</style>

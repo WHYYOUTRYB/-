@@ -1,0 +1,99 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const essays = await getCollection("essays", ({ data }) => !data.draft);
+  return essays.map((essay) => ({
+    params: { slug: essay.id },
+  }));
+}
+
+const { slug } = Astro.params;
+const allEssays = await getCollection("essays", ({ data }) => !data.draft);
+const essay = allEssays.find((e) => e.id === slug);
+
+if (!essay) {
+  return Astro.redirect("/404");
+}
+
+const { Content } = await render(essay);
+---
+
+<BaseLayout title={essay.data.title} description={essay.data.description}>
+  <article class="essay-page">
+    <nav class="breadcrumb">
+      <a href="/essays">随笔</a>
+      <span class="sep">/</span>
+      <span>{essay.data.title}</span>
+    </nav>
+
+    <header class="essay-header">
+      <h1>{essay.data.title}</h1>
+      <div class="essay-meta">
+        <span>{essay.data.pubDate.toLocaleDateString("zh-CN")}</span>
+        {essay.data.tags.length > 0 && (
+          <>
+            <span class="sep">·</span>
+            <span class="tags">
+              {essay.data.tags.map((tag: string) => (
+                <a href={`/tags/${tag}`} class="tag">{tag}</a>
+              ))}
+            </span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <div class="prose-content">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .essay-page {
+    padding: 2.5rem 1.5rem;
+  }
+  .breadcrumb {
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+    margin-bottom: 1rem;
+  }
+  .breadcrumb a {
+    color: var(--color-text-soft);
+  }
+  .breadcrumb a:hover {
+    color: var(--color-accent);
+  }
+  .sep {
+    margin: 0 0.3rem;
+  }
+  .essay-header {
+    margin-bottom: 2rem;
+  }
+  .essay-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .essay-meta {
+    font-size: 0.85rem;
+    color: var(--color-text-faint);
+  }
+  .tags {
+    display: inline-flex;
+    gap: 0.4rem;
+  }
+  .tag {
+    background: var(--color-bg-alt);
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    color: var(--color-text-soft);
+  }
+  .tag:hover {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+</style>

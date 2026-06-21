@@ -1,0 +1,51 @@
+---
+// 主题切换按钮：点击在浅/深色间切换，记忆选择，无闪烁
+// 太阳/月亮符号用纯文字表达，契合极简风格
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  aria-label="切换深浅色主题"
+  class="theme-toggle"
+  title="切换主题"
+>
+  <span class="icon-light">☀</span>
+  <span class="icon-dark">☾</span>
+</button>
+
+<style>
+  .theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--color-text-soft);
+    transition: color 0.15s ease;
+  }
+  .theme-toggle:hover {
+    color: var(--color-text);
+  }
+  /* 根据当前主题显示对应图标 */
+  .icon-dark {
+    display: none;
+  }
+  :global(:root[data-theme="dark"]) .icon-light {
+    display: none;
+  }
+  :global(:root[data-theme="dark"]) .icon-dark {
+    display: inline;
+  }
+</style>
+
+<script>
+  const btn = document.getElementById("theme-toggle");
+  btn?.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  });
+</script>

@@ -1,0 +1,46 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="copyright">© {year} 个人笔记</p>
+    <div class="footer-links">
+      <a href="/rss.xml">RSS</a>
+      <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="mailto:me@example.com">邮箱</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-border);
+    margin-top: 4rem;
+    padding: 1.5rem 0;
+  }
+  .footer-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--color-text-faint);
+  }
+  .copyright {
+    margin: 0;
+  }
+  .footer-links {
+    display: flex;
+    gap: 1rem;
+  }
+  .footer-links a {
+    color: var(--color-text-faint);
+    font-size: 0.85rem;
+  }
+  .footer-links a:hover {
+    color: var(--color-accent);
+  }
+</style>

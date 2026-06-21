@@ -1,0 +1,170 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import TableOfContents from "../../../components/TableOfContents.astro";
+import { subjects, subjectMap } from "../../../content/subjects.config";
+import { getAllNotes, filterBySubject, getPrevNext, getSubjectName } from "../../../lib/notes";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const allNotes = await getCollection("notes", ({ data }) => !data.draft);
+  return allNotes.map((note) => ({
+    params: {
+      subject: note.data.subject,
+      slug: note.id,
+    },
+  }));
+}
+
+const { subject, slug } = Astro.params;
+
+// 直接从集合查找笔记条目（保留 render 方法）
+const allNotes = await getCollection("notes", ({ data }) => !data.draft);
+const note = allNotes.find((n) => n.id === slug && n.data.subject === subject);
+
+if (!note) {
+  return Astro.redirect("/404");
+}
+
+const { Content, headings } = await render(note);
+const subjectInfo = subjectMap[subject!];
+
+// 同学科笔记列表（用于上下篇）
+const subjectNotes = filterBySubject(
+  allNotes.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
+  subject!
+);
+const sortedNotes = [...subjectNotes].sort((a, b) => {
+  if (a.data.chapter !== b.data.chapter) {
+    return a.data.chapter.localeCompare(b.data.chapter);
+  }
+  if (a.data.order !== undefined && b.data.order !== undefined) {
+    return a.data.order - b.data.order;
+  }
+  return a.data.pubDate.getTime() - b.data.pubDate.getTime();
+});
+const { prev, next } = getPrevNext(sortedNotes, note.id);
+---
+
+<BaseLayout title={note.data.title} description={note.data.description}>
+  <article class="note-page">
+    <!-- 面包屑 -->
+    <nav class="breadcrumb">
+      <a href="/notes">笔记</a>
+      <span class="sep">/</span>
+      <a href={`/notes/${subject}`}>{getSubjectName(subject!)}</a>
+      <span class="sep">/</span>
+      <span>{note.data.chapter}</span>
+    </nav>
+
+    <!-- 文章头部 -->
+    <header class="note-header">
+      <h1 class="note-title">{note.data.title}</h1>
+      <div class="note-meta">
+        <span>{note.data.pubDate.toLocaleDateString("zh-CN")}</span>
+        <span class="sep">·</span>
+        <span>{getSubjectName(subject!)}</span>
+        {note.data.tags.length > 0 && (
+          <>
+            <span class="sep">·</span>
+            <span class="tags">
+              {note.data.tags.map((tag: string) => (
+                <a href={`/tags/${tag}`} class="tag">{tag}</a>
+              ))}
+            </span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <!-- 目录 -->
+    <TableOfContents headings={headings} />
+
+    <!-- 正文 -->
+    <div class="prose-content">
+      <Content />
+    </div>
+
+    <!-- 上下篇导航 -->
+    <nav class="prev-next">
+      {prev ? (
+        <a href={`/notes/${subject}/${prev.id}`} class="prev-link">
+          ← {prev.data.title}
+        </a>
+      ) : <span />}
+      {next ? (
+        <a href={`/notes/${subject}/${next.id}`} class="next-link">
+          {next.data.title} →
+        </a>
+      ) : <span />}
+    </nav>
+  </article>
+</BaseLayout>
+
+<style>
+  .note-page {
+    padding: 2.5rem 1.5rem;
+  }
+  .breadcrumb {
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+    margin-bottom: 1rem;
+  }
+  .breadcrumb a {
+    color: var(--color-text-soft);
+  }
+  .breadcrumb a:hover {
+    color: var(--color-accent);
+  }
+  .sep {
+    margin: 0 0.3rem;
+  }
+  .note-header {
+    margin-bottom: 2rem;
+  }
+  .note-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
+  }
+  .note-meta {
+    font-size: 0.85rem;
+    color: var(--color-text-faint);
+  }
+  .tags {
+    display: inline-flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .tag {
+    background: var(--color-bg-alt);
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    color: var(--color-text-soft);
+  }
+  .tag:hover {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .prev-next {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9rem;
+  }
+  .prev-link,
+  .next-link {
+    color: var(--color-text-soft);
+    max-width: 45%;
+  }
+  .prev-link:hover,
+  .next-link:hover {
+    color: var(--color-accent);
+  }
+  .next-link {
+    text-align: right;
+  }
+</style>

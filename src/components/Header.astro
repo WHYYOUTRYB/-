@@ -1,0 +1,108 @@
+---
+import ThemeToggle from "./ThemeToggle.astro";
+
+/** 当前路径，用于高亮导航 */
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { label: "笔记", href: "/notes" },
+  { label: "随笔", href: "/essays" },
+  { label: "作品", href: "/projects" },
+  { label: "关于", href: "/about" },
+];
+
+/** 判断当前路径是否属于某导航项 */
+function isActive(href: string): boolean {
+  if (href === "/") return currentPath === "/";
+  return currentPath.startsWith(href);
+}
+---
+
+<header class="site-header">
+  <nav class="header-inner">
+    <a href="/" class="site-name">个人笔记</a>
+    <ul class="nav-links">
+      {navItems.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class:list={["nav-link", { active: isActive(item.href) }]}
+          >
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+    <div class="header-actions">
+      <a href="/search" class="search-link" aria-label="搜索" title="搜索">
+        ⊇
+      </a>
+      <ThemeToggle />
+    </div>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    height: 3.5rem;
+    gap: 1.5rem;
+  }
+  .site-name {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+  .site-name:hover {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 1.25rem;
+  }
+  .nav-link {
+    font-size: 0.95rem;
+    color: var(--color-text-soft);
+    transition: color 0.15s ease;
+  }
+  .nav-link:hover {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .nav-link.active {
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .search-link {
+    font-size: 1.2rem;
+    color: var(--color-text-soft);
+    padding: 4px 8px;
+    transition: color 0.15s ease;
+  }
+  .search-link:hover {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+</style>

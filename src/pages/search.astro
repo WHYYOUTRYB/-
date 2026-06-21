@@ -1,0 +1,100 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="搜索" description="站内搜索">
+  <div class="page">
+    <header class="page-header">
+      <h1>搜索</h1>
+    </header>
+
+    <div id="search">
+      <div id="searchbox"></div>
+      <div id="searchresults"></div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    font-weight: 700;
+  }
+  #search {
+    min-height: 300px;
+  }
+
+  /* Pagefind 样式适配 */
+  :global(.pf-search-box) {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    outline: none;
+    font-family: var(--font-serif);
+  }
+  :global(.pf-search-box:focus) {
+    border-color: var(--color-accent);
+  }
+  :global(.pf-result) {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  :global(.pf-result-title) {
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+  :global(.pf-result-excerpt) {
+    color: var(--color-text-soft);
+    font-size: 0.9rem;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var query = params.get("q") || "";
+
+    function loadPagefind() {
+      // Pagefind 在构建后生成到 /pagefind/ 目录，动态加载
+      var script = document.createElement("script");
+      script.src = "/pagefind/pagefind.js";
+      script.onload = function () {
+        // @ts-ignore
+        window.pagefind.init().then(function () {
+          // 渲染搜索框
+          // @ts-ignore
+          window.pagefind.ui({
+            element: "#searchbox",
+            showSubResults: true,
+          });
+
+          if (query) {
+            var input = document.querySelector(".pf-search-box");
+            if (input) {
+              input.value = decodeURIComponent(query);
+              input.dispatchEvent(new Event("input"));
+            }
+          }
+        });
+      };
+      document.body.appendChild(script);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", loadPagefind);
+    } else {
+      loadPagefind();
+    }
+  })();
+</script>

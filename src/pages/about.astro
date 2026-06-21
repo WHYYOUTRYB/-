@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="关于" description="关于本站">
+  <div class="page">
+    <header class="page-header">
+      <h1>关于</h1>
+    </header>
+
+    <div class="prose-content">
+      <p>这是一个以<strong>学业笔记</strong>为核心的个人知识站点。</p>
+
+      <p>笔记按「学科 → 章节 → 笔记」三级组织，支持数学公式、代码高亮与 Wiki 风格链接。</p>
+
+      <h2>技术栈</h2>
+      <ul>
+        <li>框架：Astro</li>
+        <li>样式：Tailwind CSS</li>
+        <li>公式：KaTeX</li>
+        <li>搜索：Pagefind</li>
+      </ul>
+
+      <h2>写作流程</h2>
+      <ul>
+        <li>在 <code>src/content/notes/</code> 下新建 Markdown 文件</li>
+        <li>填写 frontmatter（title、subject、chapter、pubDate、description、tags）</li>
+        <li>编写正文，支持 <code>$...$</code> 行内公式、<code>$$...$$</code> 块级公式、<code>[[Wiki链接]]</code></li>
+        <li>添加学科只需在 <code>subjects.config.ts</code> 中加一行配置</li>
+      </ul>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    font-weight: 700;
+  }
+</style>

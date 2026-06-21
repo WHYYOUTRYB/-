@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SubjectCard from "../../components/SubjectCard.astro";
+import { subjects } from "../../content/subjects.config";
+import { getAllNotes, countBySubject } from "../../lib/notes";
+
+const allNotes = await getAllNotes();
+---
+
+<BaseLayout title="笔记总览" description="所有学科笔记入口">
+  <div class="page">
+    <header class="page-header">
+      <h1>笔记</h1>
+      <p class="page-desc">共 {allNotes.length} 篇笔记，按学科分类。</p>
+    </header>
+
+    <div class="subject-grid">
+      {subjects.map((s) => (
+        <SubjectCard subject={s} noteCount={countBySubject(allNotes, s.slug)} />
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+  }
+  .page-desc {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+</style>

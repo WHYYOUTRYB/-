@@ -1,0 +1,89 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const projects = await getCollection("projects", ({ data }) => !data.draft);
+const sorted = projects.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<BaseLayout title="作品" description="作品集">
+  <div class="page">
+    <header class="page-header">
+      <h1>作品</h1>
+      <p class="page-desc">做过的一些东西。</p>
+    </header>
+
+    <div class="project-list">
+      {sorted.map((project) => (
+        <a href={`/projects/${project.id}`} class="project-card">
+          <h3 class="project-name">{project.data.name}</h3>
+          <p class="project-desc">{project.data.description}</p>
+          {project.data.stack.length > 0 && (
+            <div class="project-stack">
+              {project.data.stack.map((s: string) => (
+                <span class="stack-tag">{s}</span>
+              ))}
+            </div>
+          )}
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+  }
+  .page-desc {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .project-list {
+    display: grid;
+    gap: 1rem;
+  }
+  .project-card {
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s;
+  }
+  .project-card:hover {
+    border-color: var(--color-accent);
+  }
+  .project-name {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .project-desc {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-soft);
+  }
+  .project-stack {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .stack-tag {
+    font-size: 0.75rem;
+    background: var(--color-bg-alt);
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    color: var(--color-text-faint);
+  }
+</style>

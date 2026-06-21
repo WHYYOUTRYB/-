@@ -1,0 +1,121 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { subjects, subjectMap } from "../../content/subjects.config";
+import { getSubjectNotesGrouped, getSubjectName } from "../../lib/notes";
+
+export async function getStaticPaths() {
+  return subjects.map((s) => ({
+    params: { subject: s.slug },
+  }));
+}
+
+const { subject } = Astro.params;
+const subjectInfo = subjectMap[subject!];
+const chapters = await getSubjectNotesGrouped(subject!);
+---
+
+<BaseLayout
+  title={subjectInfo ? subjectInfo.name : subject}
+  description={subjectInfo?.description ?? ""}
+>
+  <div class="page">
+    <!-- 面包屑 -->
+    <nav class="breadcrumb">
+      <a href="/notes">笔记</a>
+      <span class="sep">/</span>
+      <span>{subjectInfo?.icon ?? ""} {getSubjectName(subject!)}</span>
+    </nav>
+
+    <header class="page-header">
+      <h1>{subjectInfo?.icon ?? ""} {getSubjectName(subject!)}</h1>
+      {subjectInfo?.description && (
+        <p class="page-desc">{subjectInfo.description}</p>
+      )}
+    </header>
+
+    <!-- 按章节分组 -->
+    {chapters.map((group) => (
+      <section class="chapter-section">
+        <h2 class="chapter-title">{group.chapter}</h2>
+        <ul class="note-list">
+          {group.notes.map((note) => (
+            <li class="note-item">
+              <a href={`/notes/${subject}/${note.id}`}>
+                {note.data.title}
+              </a>
+              <span class="note-meta">
+                {note.data.pubDate.toLocaleDateString("zh-CN")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .breadcrumb {
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+    margin-bottom: 1rem;
+  }
+  .breadcrumb a {
+    color: var(--color-text-soft);
+  }
+  .breadcrumb a:hover {
+    color: var(--color-accent);
+  }
+  .sep {
+    margin: 0 0.3rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+  }
+  .page-desc {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .chapter-section {
+    margin-bottom: 1.5rem;
+  }
+  .chapter-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .note-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed var(--color-border);
+  }
+  .note-item:last-child {
+    border-bottom: none;
+  }
+  .note-item a {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+  .note-meta {
+    font-size: 0.8rem;
+    color: var(--color-text-faint);
+  }
+</style>

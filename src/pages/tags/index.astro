@@ -1,0 +1,86 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAllNotes } from "../../lib/notes";
+import { getCollection } from "astro:content";
+
+const allNotes = await getAllNotes();
+const allEssays = await getCollection("essays", ({ data }) => !data.draft);
+
+// 从笔记和随笔中收集所有标签
+const tagMap = new Map<string, number>();
+
+for (const note of allNotes) {
+  for (const tag of note.data.tags) {
+    tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
+  }
+}
+for (const essay of allEssays) {
+  for (const tag of essay.data.tags) {
+    tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
+  }
+}
+
+const tags = [...tagMap.entries()].sort((a, b) => a[0].localeCompare(b[0], "zh-CN"));
+---
+
+<BaseLayout title="标签" description="所有标签索引">
+  <div class="page">
+    <header class="page-header">
+      <h1>标签</h1>
+      <p class="page-desc">共 {tags.length} 个标签</p>
+    </header>
+
+    <div class="tag-grid">
+      {tags.map(([tag, count]) => (
+        <a href={`/tags/${tag}`} class="tag-card">
+          <span class="tag-name">{tag}</span>
+          <span class="tag-count">{count} 篇</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding: 2.5rem 1.5rem;
+  }
+  .page-header {
+    margin-bottom: 2rem;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+  }
+  .page-desc {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .tag-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--color-text-soft);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .tag-card:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .tag-count {
+    font-size: 0.75rem;
+    color: var(--color-text-faint);
+  }
+</style>

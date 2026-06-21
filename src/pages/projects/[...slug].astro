@@ -1,0 +1,113 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects", ({ data }) => !data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+  }));
+}
+
+const { slug } = Astro.params;
+const allProjects = await getCollection("projects", ({ data }) => !data.draft);
+const project = allProjects.find((p) => p.id === slug);
+
+if (!project) {
+  return Astro.redirect("/404");
+}
+
+const { Content } = await render(project);
+---
+
+<BaseLayout title={project.data.name} description={project.data.description}>
+  <article class="project-page">
+    <nav class="breadcrumb">
+      <a href="/projects">作品</a>
+      <span class="sep">/</span>
+      <span>{project.data.name}</span>
+    </nav>
+
+    <header class="project-header">
+      <h1>{project.data.name}</h1>
+      <p class="project-desc">{project.data.description}</p>
+      <div class="project-meta">
+        {project.data.stack.length > 0 && (
+          <div class="project-stack">
+            {project.data.stack.map((s: string) => (
+              <span class="stack-tag">{s}</span>
+            ))}
+          </div>
+        )}
+        <div class="project-links">
+          {project.data.url && (
+            <a href={project.data.url} target="_blank" rel="noopener noreferrer">在线访问</a>
+          )}
+          {project.data.repo && (
+            <a href={project.data.repo} target="_blank" rel="noopener noreferrer">源码</a>
+          )}
+        </div>
+      </div>
+    </header>
+
+    <div class="prose-content">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .project-page {
+    padding: 2.5rem 1.5rem;
+  }
+  .breadcrumb {
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+    margin-bottom: 1rem;
+  }
+  .breadcrumb a {
+    color: var(--color-text-soft);
+  }
+  .breadcrumb a:hover {
+    color: var(--color-accent);
+  }
+  .sep {
+    margin: 0 0.3rem;
+  }
+  .project-header {
+    margin-bottom: 2rem;
+  }
+  .project-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .project-desc {
+    margin: 0 0 0.75rem;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .project-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .project-stack {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .stack-tag {
+    font-size: 0.75rem;
+    background: var(--color-bg-alt);
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    color: var(--color-text-faint);
+  }
+  .project-links {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+</style>

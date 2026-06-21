@@ -1,0 +1,66 @@
+---
+import type { Subject } from "../content/subjects.config";
+
+interface Props {
+  subject: Subject;
+  noteCount: number;
+}
+
+const { subject, noteCount } = Astro.props;
+---
+
+<a href={`/notes/${subject.slug}`} class="subject-card">
+  <span class="subject-icon">{subject.icon}</span>
+  <div class="subject-info">
+    <h3 class="subject-name">{subject.name}</h3>
+    {subject.description && (
+      <p class="subject-desc">{subject.description}</p>
+    )}
+  </div>
+  <span class="note-count">{noteCount} 篇</span>
+</a>
+
+<style>
+  .subject-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .subject-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+  }
+  .subject-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 2.5rem;
+    text-align: center;
+  }
+  .subject-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .subject-name {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .subject-desc {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+  }
+  .note-count {
+    font-size: 0.8rem;
+    color: var(--color-text-faint);
+    white-space: nowrap;
+  }
+</style>
