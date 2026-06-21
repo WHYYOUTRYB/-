@@ -2,7 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import TableOfContents from "../../../components/TableOfContents.astro";
 import { subjects, subjectMap } from "../../../content/subjects.config";
-import { getAllNotes, filterBySubject, getPrevNext, getSubjectName } from "../../../lib/notes";
+import { getAllNotes, filterBySubject, getPrevNext, getSubjectName, groupByChapter } from "../../../lib/notes";
 import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
@@ -29,18 +29,23 @@ const { Content, headings } = await render(note);
 const subjectInfo = subjectMap[subject!];
 
 // 同学科笔记列表（用于上下篇）
+// 章节排序复用 groupByChapter 的逻辑（按首篇笔记 order），避免
+// chapter.localeCompare 在「第2章 vs 第10章」时按字典序错排。
 const subjectNotes = filterBySubject(
   allNotes.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
   subject!
 );
+const chapterOrder = new Map(
+  (await groupByChapter(subjectNotes)).map((g, i) => [g.chapter, i])
+);
 const sortedNotes = [...subjectNotes].sort((a, b) => {
-  if (a.data.chapter !== b.data.chapter) {
-    return a.data.chapter.localeCompare(b.data.chapter);
-  }
+  const ca = chapterOrder.get(a.data.chapter) ?? 0;
+  const cb = chapterOrder.get(b.data.chapter) ?? 0;
+  if (ca !== cb) return ca - cb;
   if (a.data.order !== undefined && b.data.order !== undefined) {
     return a.data.order - b.data.order;
   }
-  return a.data.pubDate.getTime() - b.data.pubDate.getTime();
+  return b.data.pubDate.getTime() - a.data.pubDate.getTime();
 });
 const { prev, next } = getPrevNext(sortedNotes, note.id);
 ---
